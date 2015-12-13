@@ -1,0 +1,13 @@
+
+#General
+RMYPATH=/nfs/vendata/oursu/oana/GemPaper_2015-12-07/src/R/R-3.2.2/bin
+export R_LIBS=$R_LIBS:/nfs/vendata/oursu/oana/GemPaper_2015-12-07/src/R/my_libraries/
+DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
+
+#1. Kinase analysis and input creation
+#=====================================
+#analysis of the kinase screen 
+${RMYPATH}/Rscript ${DATADIR}/src/kinase/RUN_kinase_screenAnalysis.R ${DATADIR}
+#analysis of the kinase targets
+${RMYPATH}/Rscript ${DATADIR}/src/kinase/RUN_kinase_targetAnalysis.R ${DATADIR}
+#converting the kinase results to SAMNet inputs

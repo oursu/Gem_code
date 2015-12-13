@@ -1,0 +1,28 @@
+#Settings
+DATADIR=
+
+ANALYSIS_DIRECTORY=/nfs/vendata/oursu/oana/Old_Gem_paper
+SCREEN_ANALYSIS=${ANALYSIS_DIRECTORY}/results/screen_analysis
+validatedHits=${ANALYSIS_DIRECTORY}/data/screen/validatedHits
+valiHit_cap=3
+EntrezGene2GeneSymbol=${ANALYSIS_DIRECTORY}/data/screen/R_org.Hs.eg.db_2011-08-07_entrez_to_geneSymbols
+pvalue=0.05
+SI_dev=0.3
+veh_min_suvival=0.5
+genetic_hits=${SCREEN_ANALYSIS}/INPUT1_GeneticHits_Pval${pvalue}_vehSurvival${veh_min_suvival}_SIdev${SI_dev}.tab
+genetic_hits_out=${genetic_hits}_with_validated.phen
+README=${SCREEN_ANALYSIS}/README
+
+
+#Analyze screen
+mkdir ${SCREEN_ANALYSIS}
+Rscript ${ANALYSIS_DIRECTORY}/src/INPUT1_GeneticHits/Genetic_hits_analysis.R ${ANALYSIS_DIRECTORY} ${ANALYSIS_DIRECTORY}/results/screen_analysis ${pvalue} ${SI_dev} ${veh_min_suvival} ${genetic_hits}
+
+#Prepare genetic hits for SAMNet
+python ${ANALYSIS_DIRECTORY}/src/INPUT1_GeneticHits/Filter_genetic_hits_for_network_input.py --genetic_hits ${genetic_hits} --genetic_hits_out ${genetic_hits_out} --eg2gs ${EntrezGene2GeneSymbol} --validated ${validatedHits} --scaling ${valiHit_cap}
+
+echo '==========================' > ${README}
+echo I ran ${ANALYSIS_DIRECTORY}/src/INPUT1_GeneticHits/INPUT1_GeneticHits.sh >> ${README}
+echo I have created SAMNet INPUT1 as ${genetic_hits_out} >> ${README}
+echo '==========================' >> ${README}
+

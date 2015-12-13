@@ -1,0 +1,227 @@
+---
+title: "KinaseInhibitorScreen_analysis"
+author: "Oana Ursu"
+date: "November 26, 2015"
+output: html_document
+---
+
+Change DATADIR to where you downloaded the supplement
+
+```{r}
+DATADIR='/nfs/vendata/oursu/oana/GemPaper_2015-12-07'
+```
+
+Produces Figure 1A, 1B
+===
+
+Here I analyze the results from the kinase inhibitor screen. The goal is to identify which kinase inhibitors synergize with gemcitabine.
+
+```{r}
+require(reshape2)
+require(drc)
+
+#Inputs
+KINASE_SCREEN_DATA=paste(DATADIR,'/data/kinase/Table.S1.1.Kinase_measurements.txt',sep='')
+#Outputs
+OUT=paste(DATADIR,'/results/data_processing/kinase',sep='')
+system(paste('mkdir',OUT))
+KINASE_OUT=paste(OUT,'/Table.S1.4.KinaseScreen_Hits.txt',sep='')
+```
+
+```{r}
+data=read.table(KINASE_SCREEN_DATA,header=T,sep='\t')
+rownames(data)=as.character(data$KI)
+data=data[,-which(colnames(data)=='KI')]
+data=melt(as.matrix(data))
+data=data.frame(KI=data[,1],
+                 Concentration=gsub('[.]1','',gsub('Gem.','',gsub('Veh.','',gsub('M[.]1','M',as.character(data[,2]))))),
+                 ControlStatus=gsub('[.]1','',gsub('[.][0-9]*[a-zA-Z]*','',as.character(data[,2]))),
+                 value=data[,3])
+data[,'Concentration']=as.numeric(gsub('pm','',gsub('[.]','',gsub('nM','000',data[,'Concentration']))))
+print(head(data))
+```
+
+Across all concentrations, compute the ratio of viability(gem + kinase inhibitor)/viability(kinase inhibitor). We will filter for those kinase inhibitors that reduce viability the most.
+
+```{r}
+CONC_NOTHING=64
+N=2
+results=data.frame(KI=character(),
+                   Concentration=double(),
+                   mean_veh=double(),
+                   mean_gem=double(),
+                   sd_veh=double(),
+                   sd_gem=double(),
+                   canBeFitWeibull=logical(),
+                   p_lackOfFit=double(),
+                   p_variationVehicle=double(),
+                   gem_conf_low_alive=double(),
+                   gem_conf_high_alive=double(),
+                   bliss_alive=double(),
+                   p_ttest=double(),
+                   rangesOverlap=logical())
+for (ki in as.character(unique(data$KI))){
+  data_ki=data[which(as.character(data$KI)==ki),]
+  concs=as.numeric(as.character(unique(data_ki$Concentration)))
+  for (conc in concs){
+      idx_veh=intersect(which(as.numeric(data_ki$Concentration)==conc),
+                    which(as.character(data_ki$ControlStatus)=='Veh'))
+      idx_gem=intersect(which(as.numeric(data_ki$Concentration)==conc),
+                    which(as.character(data_ki$ControlStatus)=='Gem'))
+      m_veh=mean(data_ki[idx_veh,'value'])
+      m_gem=mean(data_ki[idx_gem,'value'])
+      sd_veh=sd(data_ki[idx_veh,'value'])
+      sd_gem=sd(data_ki[idx_gem,'value'])
+      #for bliss========
+      #denominator
+      veh_denom=mean(data_ki[intersect(which(as.numeric(data_ki$Concentration)==CONC_NOTHING),
+                    which(as.character(data_ki$ControlStatus)=='Veh')),'value'])
+      veh_proportions=data_ki[idx_veh,'value']/veh_denom
+      gem_proportions=data_ki[idx_gem,'value']/veh_denom
+      #gem killing
+      gem_killing=min(mean(data_ki[intersect(which(as.numeric(data_ki$Concentration)==conc),
+                    which(as.character(data_ki$ControlStatus)=='Gem')),'value'])/veh_denom,1)
+      veh_killing=max(1-mean(veh_proportions),0)
+      bliss_expected_alive=1-veh_killing-gem_killing+veh_killing*gem_killing
+      for_conf=qnorm(0.95)*sd(gem_proportions)/sqrt(N)
+      rangesOverlap=FALSE
+      if (min(data_ki[idx_veh,'value'])<max(data_ki[idx_gem,'value'])){
+        rangesOverlap=TRUE
+      }
+      results=rbind(results,
+                    data.frame(KI=ki,
+                               Concentration=conc,
+                               mean_veh=m_veh,
+                               mean_gem=m_gem,
+                               sd_veh=sd_veh,
+                               sd_gem=sd_gem,
+                               canBeFitWeibull=FALSE,
+                               p_lackOfFit=-1,
+                               p_variationVehicle=-1,
+                               gem_conf_low_alive=mean(gem_proportions)-for_conf,
+                               gem_conf_high_alive=mean(gem_proportions)+for_conf,
+                               bliss_alive=bliss_expected_alive,
+                               p_ttest=t.test(data_ki[idx_veh,'value'],data_ki[idx_gem,'value'],
+                                              alternative='greater')[['p.value']],
+                               rangesOverlap=rangesOverlap))
+      #Also add the expected survival from Bliss
+  }
+}
+```
+
+Fit Weibull distribution
+========================
+
+```{r}
+fit_weibull_separately=function(data,ki){
+ tryCatch(
+   { 
+     out=list()
+     out[['separate_model']]=drm(value ~ Concentration, curveid=ControlStatus,data=data,fct=W1.4())
+     out[['canBeFit']]=TRUE
+     par(mar=c(4,6,4,2)+1)
+     plot(out[['separate_model']],col=TRUE,pch=c(1,6),cex.legend=0.6,
+     main=paste('Kinase inhibitor: ',ki,sep=''),
+     xlab='Dose (pM)',ylab='',
+     ylim=c(0,150000))
+     mtext("Viability",side=2,line=5)
+     #check whether fit with the weibull distribution is good. check whether it is sig diff from 1-way anova
+     #https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&ved=0CEAQFjAHahUKEwihobCdnZrJAhUKaT4KHYsmB3A&url=http%3A%2F%2Fwww.jstatsoft.org%2Farticle%2Fview%2Fv012i05%2Fv12i05.pdf&usg=AFQjCNG8wZJ4XniU3Zfj95e0GqOk2lm_tg&sig2=F1D2aW2OcB9AzSFGHOvPcw
+     lackOfFit_pvalue=modelFit(out[['separate_model']])[['p value']][2]
+     out[['lackOfFit_pvalue']]=lackOfFit_pvalue
+     return(out)
+     },
+   error=function(e){
+     out=list()
+     out[['separate_model']]=c()
+     out[['canBeFit']]=FALSE
+     out[['lackOfFit_pvalue']]=NA
+     return(out)
+   }
+   ) 
+}  
+
+pdf(paste(OUT,'/KinaseInhibitorScreen_WeibullCurves.pdf',sep=''),width=5,height=5)
+for (ki in as.character(unique(data$KI))){
+  print(paste('Kinase inhibitor: ',ki,sep=''))
+  data_ki=data[which(as.character(data$KI)==ki),]
+
+  #Fit Weibulls
+  #============
+  separate=fit_weibull_separately(data_ki,ki)
+  print(separate)
+  #Whether data can be fit (convergence)
+  if (separate[['canBeFit']]==TRUE){
+    results[which(results$KI==ki),'canBeFitWeibull']=TRUE
+  }
+  #Whether data can be fit (from lack of fit p-value)
+  results[which(results$KI==ki),'p_lackOfFit']=separate[['lackOfFit_pvalue']]
+}
+dev.off()
+
+```
+
+Filters
+=======
+
+**Remove kinase inhibitors that cannot be fit with the Weibull distribution**
+
+```{r}
+ki_cannot_be_fit=as.character(unique(results[union(which(results[,'canBeFitWeibull']==FALSE),which(results[,'p_lackOfFit']<=0.05)),'KI']))
+cannot_be_fit=which(as.character(results$KI) %in% ki_cannot_be_fit)
+```
+
+**Remove kinase inhibitors with overlapping intervals for viability(kinase inhibitor) and viability(gem + kinase inhibitor)**
+```{r}
+overlapping_intervals=which(results$rangesOverlap==TRUE)
+```
+
+**Remove kinase inhibitors that are toxic even without gemcitabine**
+
+```{r}
+TOXIC=50000
+ki_toxic=as.character(unique(results[which(as.numeric(results$mean_veh)<=TOXIC),'KI']))
+toxic=which(as.character(results$KI) %in% ki_toxic)
+```
+
+Apply all filters.
+
+```{r}
+filter_out=union(cannot_be_fit,union(overlapping_intervals,toxic))
+results_filtered=results[-filter_out,]
+```
+
+Kinase inhibitors that synergize with gemcitabine
+========
+
+Print a histogram of reduction in viability, for the best concentration per drug 
+
+```{r}
+THRESHOLD=0.3
+results_filtered_order=results_filtered[order(as.numeric(results_filtered$mean_gem/results_filtered$mean_veh,decreasing=FALSE)),]
+results_filtered_bestConc=results_filtered_order[-which(duplicated(results_filtered_order$KI)),]
+
+pdf(paste(OUT,'/KinaseInhibitorScreen_Ratios.pdf',sep=''),width=5,height=5)
+par(mar=c(6,6,4,2)+1)
+hist(1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh,breaks=50,
+     xlab='Reduction in viability \n 1-Viability(Gem + KI)/Viability(KI)',main='')
+abline(v=THRESHOLD,col='red')
+dev.off()
+
+hist(1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh,breaks=50,
+     xlab='Reduction in viability \n 1-Viability(Gem + KI)/Viability(KI)',main='')
+abline(v=THRESHOLD,col='red')
+```
+
+Write hits
+
+```{r}
+hits=results_filtered_bestConc[which((1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh)>=THRESHOLD),]
+write.table(hits,file=KINASE_OUT,sep='\t',quote=F,row.names=F,col.names=T)
+```
+
+
+
+
+
+
