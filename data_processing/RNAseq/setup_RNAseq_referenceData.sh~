@@ -1,6 +1,9 @@
 
 DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
 
+#get mask files: 
+#Download mask files from UCSC - as directed in (from http://onetipperday.blogspot.com/2012/08/how-to-get-trnarrnamitochondrial-gene.html)
+
 gencode_gtf=ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz
 cd ${DATADIR}/data/RNAseq/referenceData/
 wget ${gencode_gtf}
@@ -32,5 +35,5 @@ ${bowtiepath}-build ${FASTA} ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male
 rsempath=${DATADIR}/bin/rsem/RSEM-1.2.25/rsem
 pcgtf=${DATADIR}/data/RNAseq/referenceData/gencode.v19.annotation.protein_coding.gtf
 mkdir -p ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/rsem_index/
-${rsempath}-prepare-reference --bowtie2  --gtf ${pcgtf} ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/male.hg19.fa ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/rsem_index/encodeHg19Male.hg19.gencode.v19.annotation.protein_coding
+${rsempath}-prepare-reference --bowtie2 --bowtie2-path /nfs/vendata/oursu/oana/GemPaper_2015-12-07/bin/bowtie2/bowtie2-2.2.6/ --gtf ${pcgtf} ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/male.hg19.fa ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/rsem_index/encodeHg19Male.hg19.gencode.v19.annotation.protein_coding
 

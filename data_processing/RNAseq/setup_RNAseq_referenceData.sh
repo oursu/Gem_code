@@ -1,6 +1,9 @@
 
 DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
 
+#get mask files: /nfs/vendata/oursu/oana/GemPaper_2015-12-07/data/RNAseq/referenceData/hg19/maskfiles/rRNA.tRNA.mitoRNA_2013-03-10.gtf
+#Download mask files from UCSC - as directed in (from http://onetipperday.blogspot.com/2012/08/how-to-get-trnarrnamitochondrial-gene.html)
+
 gencode_gtf=ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz
 cd ${DATADIR}/data/RNAseq/referenceData/
 wget ${gencode_gtf}
