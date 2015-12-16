@@ -37,3 +37,22 @@ pcgtf=${DATADIR}/data/RNAseq/referenceData/gencode.v19.annotation.protein_coding
 mkdir -p ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/rsem_index/
 ${rsempath}-prepare-reference --bowtie2 --bowtie2-path /nfs/vendata/oursu/oana/GemPaper_2015-12-07/bin/bowtie2/bowtie2-2.2.6/ --gtf ${pcgtf} ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/male.hg19.fa ${DATADIR}/data/RNAseq/referenceData/encodeHg19Male/rsem_index/encodeHg19Male.hg19.gencode.v19.annotation.protein_coding
 
+#======
+#star_rsem_prep
+RSEMgenomeDir=${DATADIR}/data/RNAseq/referenceData/hg19/RSEM_reference
+mkdir $RSEMgenomeDir
+STARgenomeDir=${DATADIR}/data/RNAseq/referenceData/hg19/STAR_reference
+mkdir $STARgenomeDir
+#rsem prepare reference
+gtf=${DATADIR}/data/RNAseq/referenceData/gencode.v19.annotation.gtf
+fastaGenome=${DATADIR}/data/RNAseq/referenceData/hg19/hg19.fa
+#RSEM =======
+rsempath=${DATADIR}/bin/rsem/RSEM-1.2.25/rsem
+${rsempath}-prepare-reference --gtf $gtf $fastaGenome $RSEMgenomeDir/RSEMref
+#STAR =======
+STAR=${DATADIR}/bin/star/STAR-2.5.0b/bin/Linux_x86_64_static/STAR
+${STAR} --runThreadN 3 --runMode genomeGenerate --genomeDir $STARgenomeDir --genomeFastaFiles $fastaGenome --sjdbGTFfile $gtf --sjdbOverhang 100 --outFileNamePrefix $STARgenomeDir
+
+
+
+
