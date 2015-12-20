@@ -22,10 +22,11 @@ FINAL=${DATADIR}/results/inputs/$(basename ${genetic_hits_out})-inPPI-expressed$
 #Analyze screen
 ${RPATH}/Rscript ${SRC}/data_processing/genetic/scripts/geneticScreen_analysis.R ${SCREEN_DATA} ${pvalue} ${SI_dev} ${veh_min_suvival} ${genetic_hits}
 
-
 #add validated hits
 python ${SRC}/data_processing/genetic/scripts/Filter_genetic_hits_for_network_input.py --genetic_hits ${genetic_hits}.tab --genetic_hits_out ${genetic_hits_out} --eg2gs ${EntrezGene2GeneSymbol} --validated ${validatedHits} --scaling ${valiHit_cap}
 
 #prepare for samnet
 python ${DATADIR}/src/Gem_code/inputs/prepare_input_for_SAMNet.py --input ${genetic_hits_out}.phen --input_type phen --PPI ${PPI} --expressed ${EXPRESSED} --out ${FINAL}
 
+#And translate the whole screen (for cross-check with the other datasets)
+python ${DATADIR}/src/Gem_code/data_processing/genetic/scripts/Translate_geneticData_toSymbol.py --genetic_data ${SCREEN_DATA} --genetic_data_out ${SCREEN_DATA}.translated$(basename ${EntrezGene2GeneSymbol}) --eg2gs ${EntrezGene2GeneSymbol} 

@@ -37,7 +37,7 @@ system(paste('mkdir',FIG_OUT))
 KI_NAMES=paste(DATADIR,'/data/kinase/Table.S1.2.KI_names.txt',sep='')
 KINASE_HITS=paste(DATADIR,'/results/data_processing/kinase/Table.S1.4.KinaseScreen_Hits.txt',sep='')
 KINASE_TARGETS=paste(DATADIR,'/data/kinase/Table.S1.3.KinaseTargets.txt',sep='')
-GENETIC_ANALYSIS=paste(DATADIR,'/data/genetic/Table.S2.1.GeneticHitsProcessedData.txt',sep='')
+GENETIC_ANALYSIS=paste(DATADIR,'/data/genetic/Table.S2.1.GeneticHitsProcessedData.txt.translatedR_org.Hs.eg.db_2011-08-07_entrez_to_geneSymbols',sep='')
 DE_FILE=paste(DATADIR,'/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff',sep='')
 FPKMmin=0.1
 KINASE_THRESHOLD=50

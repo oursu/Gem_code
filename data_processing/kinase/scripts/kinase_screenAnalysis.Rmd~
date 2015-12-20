@@ -25,7 +25,7 @@ KINASE_SCREEN_DATA=paste(DATADIR,'/data/kinase/Table.S1.1.Kinase_measurements.tx
 #Outputs
 OUT=paste(DATADIR,'/results/data_processing/kinase',sep='')
 system(paste('mkdir',OUT))
-KINASE_OUT=paste(OUT,'/Table.S1.4.KinaseScreen_Hits.txt',sep='')
+KINASE_OUT=paste(OUT,'/Table.S1.4.DATA_kinaseScreen.CELL_PANC1.GENOME_NA.Params_Hits',sep='')
 ```
 
 ```{r}
@@ -46,6 +46,7 @@ Across all concentrations, compute the ratio of viability(gem + kinase inhibitor
 ```{r}
 CONC_NOTHING=64
 N=2
+LEVEL=0.95
 results=data.frame(KI=character(),
                    Concentration=double(),
                    mean_veh=double(),
@@ -83,7 +84,7 @@ for (ki in as.character(unique(data$KI))){
                     which(as.character(data_ki$ControlStatus)=='Gem')),'value'])/veh_denom,1)
       veh_killing=max(1-mean(veh_proportions),0)
       bliss_expected_alive=1-veh_killing-gem_killing+veh_killing*gem_killing
-      for_conf=qnorm(0.95)*sd(gem_proportions)/sqrt(N)
+      for_conf=qnorm(LEVEL)*sd(gem_proportions)/sqrt(N)
       rangesOverlap=FALSE
       if (min(data_ki[idx_veh,'value'])<max(data_ki[idx_gem,'value'])){
         rangesOverlap=TRUE
@@ -104,7 +105,6 @@ for (ki in as.character(unique(data$KI))){
                                p_ttest=t.test(data_ki[idx_veh,'value'],data_ki[idx_gem,'value'],
                                               alternative='greater')[['p.value']],
                                rangesOverlap=rangesOverlap))
-      #Also add the expected survival from Bliss
   }
 }
 ```
@@ -126,7 +126,6 @@ fit_weibull_separately=function(data,ki){
      ylim=c(0,150000))
      mtext("Viability",side=2,line=5)
      #check whether fit with the weibull distribution is good. check whether it is sig diff from 1-way anova
-     #https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&ved=0CEAQFjAHahUKEwihobCdnZrJAhUKaT4KHYsmB3A&url=http%3A%2F%2Fwww.jstatsoft.org%2Farticle%2Fview%2Fv012i05%2Fv12i05.pdf&usg=AFQjCNG8wZJ4XniU3Zfj95e0GqOk2lm_tg&sig2=F1D2aW2OcB9AzSFGHOvPcw
      lackOfFit_pvalue=modelFit(out[['separate_model']])[['p value']][2]
      out[['lackOfFit_pvalue']]=lackOfFit_pvalue
      return(out)
@@ -197,29 +196,48 @@ Kinase inhibitors that synergize with gemcitabine
 Print a histogram of reduction in viability, for the best concentration per drug 
 
 ```{r}
-THRESHOLD=0.3
-results_filtered_order=results_filtered[order(as.numeric(results_filtered$mean_gem/results_filtered$mean_veh,decreasing=FALSE)),]
-results_filtered_bestConc=results_filtered_order[-which(duplicated(results_filtered_order$KI)),]
+keep_best_conc=function(results_filtered){
+ results_filtered_order=results_filtered[order(as.numeric(results_filtered$mean_gem/results_filtered$mean_veh,decreasing=FALSE)),]
+ results_filtered_bestConc=results_filtered_order[-which(duplicated(results_filtered_order$KI)),]
+ return(results_filtered_bestConc)  
+}
 
-pdf(paste(OUT,'/KinaseInhibitorScreen_Ratios.pdf',sep=''),width=5,height=5)
-par(mar=c(6,6,4,2)+1)
-hist(1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh,breaks=50,
-     xlab='Reduction in viability \n 1-Viability(Gem + KI)/Viability(KI)',main='')
-abline(v=THRESHOLD,col='red')
-dev.off()
+results_filtered_bestConc=keep_best_conc(results_filtered)
 
-hist(1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh,breaks=50,
+SIG=0.05
+notfit_toxic=union(cannot_be_fit,toxic)
+results_filtered_notfit_toxic=results[-notfit_toxic,]
+results_filtered_notfit_toxic_bestConc=keep_best_conc(results_filtered_notfit_toxic)
+
+for (THRESHOLD in c(0.3,0.2)){
+
+    pdf(paste(OUT,'/KinaseInhibitorScreen_Ratios',THRESHOLD,'.pdf',sep=''),width=5,height=5)
+    par(mar=c(6,6,4,2)+1)
+    hist(1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh,breaks=50,
      xlab='Reduction in viability \n 1-Viability(Gem + KI)/Viability(KI)',main='')
-abline(v=THRESHOLD,col='red')
+    abline(v=THRESHOLD,col='red')
+    dev.off()
+
+    #write hits - Ratio threshold
+    hits=results_filtered_bestConc[which((1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh)>=THRESHOLD),]
+    write.table(hits,file=paste(KINASE_OUT,'-Ratio',THRESHOLD,'.txt',sep=''),sep='\t',quote=F,row.names=F,col.names=T)
+
+    #write hits - Ratio threshold and ttest
+    ttest_keep=intersect(which(as.numeric(results_filtered_notfit_toxic_bestConc$p_ttest)<=SIG),
+				which((1-results_filtered_notfit_toxic_bestConc$mean_gem/results_filtered_notfit_toxic_bestConc$mean_veh)>=THRESHOLD))
+    ttest_hits=results_filtered_notfit_toxic_bestConc[ttest_keep,]
+    write.table(ttest_hits,file=paste(KINASE_OUT,'-ttest',SIG,'-Ratio',THRESHOLD,'.txt',sep=''),sep='\t',quote=F,row.names=F,col.names=T)
+}
 ```
 
-Write hits
+#Bliss
 
 ```{r}
-hits=results_filtered_bestConc[which((1-results_filtered_bestConc$mean_gem/results_filtered_bestConc$mean_veh)>=THRESHOLD),]
-write.table(hits,file=KINASE_OUT,sep='\t',quote=F,row.names=F,col.names=T)
+for_bliss=results_filtered_notfit_toxic_bestConc
+bliss_hits=for_bliss[which(for_bliss$gem_conf_high_alive<=for_bliss$bliss_alive),]
+print(bliss_hits)
+write.table(bliss_hits,file=paste(KINASE_OUT,'-BlissVsLevel',LEVEL,'.txt',sep=''),sep='\t',quote=F,row.names=F,col.names=T)
 ```
-
 
 
 

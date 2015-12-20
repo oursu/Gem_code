@@ -1,0 +1,6 @@
+args=commandArgs(trailingOnly=TRUE)
+inrmd=args[1]
+results=args[2]
+require(knitr)
+knit2html(inrmd,results)
+print('Done')

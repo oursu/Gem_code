@@ -67,6 +67,9 @@ def main():
         out.write(hit+'\t'+scaling+'\n')                                                                                                                                  
     out.close()                                                                                                                                                           
                                                                                                                 
+    #3. Keep only expressed genes in the interactome - to come. Was not doing this before, so not doing it now, for now.
+    
+    #4. Print out a stats file
 
 
 

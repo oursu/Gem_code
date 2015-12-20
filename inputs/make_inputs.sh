@@ -23,19 +23,10 @@ ${DATADIR}/src/Gem_code/data_processing/genetic/DataProcessing_genetic.sh ${RMYP
 #${DATADIR}/src/Gem_code/data_processing/RNAseq/align_RNAseq.sh
 ${DATADIR}/src/Gem_code/data_processing/RNAseq/DataProcessing_RNAseq.sh ${DATADIR} 
 
-
 # Kinase analysis and input creation
 #=====================================
-KINASE_INPUT=${DATADIR}/results/inputs/KINASE_INPUT_${KINASE_ACTIVITYREDUCTION_THRESHOLD}.phen
-KINASE_ACTIVITYREDUCTION_THRESHOLD=50
-
-#analysis of the kinase screen 
-${RMYPATH}/Rscript ${DATADIR}/src/kinase/RUN_kinase_screenAnalysis.R ${DATADIR}
-#analysis of the kinase targets
-${RMYPATH}/Rscript ${DATADIR}/src/kinase/RUN_kinase_targetAnalysis.R ${DATADIR}
-#converting the kinase results to SAMNet inputs
-KINASE_TEMP=${DATADIR}/results/data_processing/kinase/KinaseTargets_for_phen_thresholdActivityReduction${KINASE_ACTIVITYREDUCTION_THRESHOLD}.phen
-python ${DATADIR}/src/inputs/prepare_input_for_SAMNet.py --input ${KINASE_TEMP} --input_type phen --PPI ${PPI} --expressed ${EXPRESSED} --out ${KINASE_INPUT}
+DEFILE=${DATADIR}/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff
+${DATADIR}/src/Gem_code/data_processing/kinase/DataProcessing_kinase.sh ${RMYPATH} ${DATADIR} ${DEFILE} ${DATADIR}/data/kinase/KinaseNameMapping.txt ${EXPRESSED} ${PPI}
 
 #DNase data analysis
 #=====================
