@@ -12,8 +12,8 @@ label=VEH23,GEM23
 OUTDIR=${DATADIR}/results/data_processing/RNAseq/cufflinks/
 mkdir -p ${OUTDIR}
 maskfile=${DATADIR}/data/RNAseq/referenceData/hg19/maskfiles/rRNA.tRNA.mitoRNA_2013-03-10.gtf
-numthreads=5
+numthreads=3
 CUFFDIR=${DATADIR}/bin/cufflinks/cufflinks-2.2.1.Linux_x86_64
 gtf=/nfs/vendata/oursu/oana/paper_analysis/mRNAseq/seq_analysis/bowtie_indices/gencodeV15/gencode.v15.annotation.gtf.protein_coding.gtf
-CMD="${CUFFDIR}/cuffdiff --labels $label -o $OUTDIR --mask-file $maskfile --raw-mapped-norm --num-threads $numthreads  $gtf $V2,$V3 $G2,$V3" ######## correct this
+CMD="${CUFFDIR}/cuffdiff --labels $label -o $OUTDIR --mask-file $maskfile --raw-mapped-norm --num-threads $numthreads  $gtf $V2,$V3 $G2,$G3" 
 echo $CMD

@@ -21,7 +21,7 @@ ${DATADIR}/src/Gem_code/data_processing/genetic/DataProcessing_genetic.sh ${RMYP
 #========================
 #alignments (tophat2)
 #${DATADIR}/src/Gem_code/data_processing/RNAseq/align_RNAseq.sh
-${DATADIR}/src/Gem_code/data_processing/RNAseq/DataProcessing_RNAseq.sh ${DATADIR} 
+${DATADIR}/src/Gem_code/data_processing/RNAseq/DataProcessing_RNAseq.sh 
 
 # Kinase analysis and input creation
 #=====================================

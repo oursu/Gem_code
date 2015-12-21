@@ -1,19 +1,47 @@
-DATADIR=$1
 
-#run cufflinks
-#=============
-#bam files
-G2=${DATADIR}/data/RNAseq/alignments/G2/accepted_hits.bam
-G3=${DATADIR}/data/RNAseq/alignments/G3/accepted_hits.bam
-V2=${DATADIR}/data/RNAseq/alignments/V2/accepted_hits.bam
-V3=${DATADIR}/data/RNAseq/alignments/V3/accepted_hits.bam
-#run cufflinks here
-label=VEH23,GEM23
-OUTDIR=${DATADIR}/results/data_processing/RNAseq/cufflinks/
-mkdir -p ${OUTDIR}
-maskfile=${DATADIR}/data/RNAseq/referenceData/hg19/maskfiles/rRNA.tRNA.mitoRNA_2013-03-10.gtf
-numthreads=3
-CUFFDIR=${DATADIR}/bin/cufflinks/cufflinks-2.2.1.Linux_x86_64
-gtf=/nfs/vendata/oursu/oana/paper_analysis/mRNAseq/seq_analysis/bowtie_indices/gencodeV15/gencode.v15.annotation.gtf.protein_coding.gtf
-CMD="${CUFFDIR}/cuffdiff --labels $label -o $OUTDIR --mask-file $maskfile --raw-mapped-norm --num-threads $numthreads  $gtf $V2,$V3 $G2,$G3" 
-echo $CMD
+RMYPATH=/nfs/vendata/oursu/oana/GemPaper_2015-12-07/bin/R-3.2.2/bin
+DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
+export R_LIBS=${DATADIR}/bin/R_libraries/
+DEFILE=${DATADIR}/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff
+
+
+SIG=0.05
+FPKMmin=0.1
+#Assumes quantification with cufflinks, file=${DATADIR}/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff
+#get DE genes
+OUT=${DATADIR}//results/data_processing/RNAseq/cufflinks_DE
+mkdir -p ${OUT}
+intro=DATA_RNAseq.CELL_PANC1.GENOME_hg19.TREAT_wtVehvsGem.PARAMS_Cufflinks-proteincoding-V23vsG23-SIG${SIG}-FPKMmin${FPKMmin}
+${RMYPATH}/Rscript ${DATADIR}/src/Gem_code/data_processing/RNAseq/scripts/DEgenes_fromCufflinks.R ${DEFILE} ${SIG} ${FPKMmin} ${OUT}/${intro}
+
+#plot GO enrichment for these genes
+OUT=${DATADIR}/results/data_processing/RNAseq/cufflinks_DE
+for gofile in $(ls ${OUT}/*GO.txt);
+do
+ echo $gofile
+ ${RMYPATH}/Rscript ${DATADIR}/src/Gem_code/data_processing/RNAseq/scripts/DEgenes_plotGO.R ${gofile} ${gofile}.pdf ${SIG}
+done
+
+GENETIC=${DATADIR}/results/data_processing/genetic/DATA_geneticScreen.CELL_PANC1.TREAT_screenForGemResistance.GENOME_hg19.PARAMS_p0.05-vehSurvival0.5-SIdev0.3-withValidated.phen
+TFFILE=${DATADIR}/results/inputs/DATA_ENCODEplusOurDNase.CELL_PANC1.TREAT_wtVehAndGem.GENOME_hg19.PARAMS_fromINPUT4TFgene.TFA.tfa
+K=${DATADIR}/results/data_processing/kinase/DATA_kinaseScreen.CELL_PANC1.GENOME_NA.Params_
+DE_GENES=${DATADIR}//results/data_processing/RNAseq/cufflinks_DE/DATA_RNAseq.CELL_PANC1.GENOME_hg19.TREAT_wtVehvsGem.PARAMS_Cufflinks-proteincoding-V23vsG23-SIG${SIG}-FPKMmin${FPKMmin}.UpAndDownReg.txt
+for kinaseparams in Hits-Ratio0.3.txt Hits-Ratio0.2.txt Hits-ttest0.05-Ratio0.3.txt Hits-BlissVsLevel0.95.txt;
+do 
+ kinase=${K}${kinaseparams}
+ for direction in Down UpAndDown;
+ do
+  KINASE_EXP=$(echo ${kinase} | sed 's/[.]txt//g')/$(basename ${kinase} | sed 's/[.]txt//g')".phen-KinaseAffected"${direction}"-expressed"
+  ls -lh   ${KINASE_EXP}
+  intro=DATA_RNAseq.CELL_PANC1.GENOME_hg19.TREAT_wtVehvsGem.Params_Cufflinks-proteincoding-V23vsG23-SIG${SIG}-FPKMmin${FPKMmin}-withKinase-${kinaseparams}${direction}
+  code=${DATADIR}/src/Gem_code/data_processing/RNAseq/scripts/DEgenes_VennDiagram.R
+  ${RMYPATH}/Rscript ${code} ${DATADIR} ${OUT}/${intro} ${DE_GENES} ${GENETIC} ${KINASE_EXP} ${DEFILE} ${FPKMmin} > ${OUT}/${intro}.intersectionsText ${TFFILE}
+ done
+done
+
+
+#tf enrichments
+intro=DATA_RNAseq.CELL_PANC1.GENOME_hg19.TREAT_wtVehvsGem.Params_Cufflinks-proteincoding-V23vsG23-SIG${SIG}-FPKMmin${FPKMmin}
+${RMYPATH}/Rscript ${DATADIR}/src/Gem_code/data_processing/RNAseq/scripts/DEgenes_TFenrichment.R ${DE_GENES} ${DEFILE} ${TFFILE} ${OUT}/${intro}.TFenrichments.pdf ${SIG}
+
+
