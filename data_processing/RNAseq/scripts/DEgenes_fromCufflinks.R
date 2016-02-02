@@ -8,6 +8,7 @@ DE_FILE=args[1]
 SIG=as.numeric(args[2])
 FPKMmin=as.numeric(args[3])
 out=args[4]
+EXPRESSED=args[5]
 
 #Produce a set of upregulated genes, and a set of downregulated genes 
 
@@ -45,4 +46,6 @@ write.table(DE_genes[['up']],file=paste(out,'.UpReg.txt',sep=''),quote=F,row.nam
 write.table(DE_genes[['down']],file=paste(out,'.DownReg.txt',sep=''),quote=F,row.names=F,col.names=T,sep='\t')
 write.table(rbind(DE_genes[['down']],DE_genes[['up']]),file=paste(out,'.UpAndDownReg.txt',sep=''),quote=F,row.names=F,col.names=T,sep='\t')
 
-
+#also write the genes that are expressed
+OKFPKMmin=union(which(de_data$value_1>=FPKMmin),which(de_data$value_2>=FPKMmin))
+write.table(de_data[OKFPKMmin,'gene'],file=EXPRESSED,quote=F,row.names=F,col.names=T,sep='\t')

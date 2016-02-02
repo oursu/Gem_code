@@ -13,6 +13,7 @@ DE_FILE=args[6]
 FPKMmin=args[7]
 TF_FILE=args[8]
 
+print(args)
 de_data=read.table(DE_FILE,header=TRUE)
 print('read DE')
 #Comparison with the genetic hits and kinase hits
@@ -54,7 +55,7 @@ everything=length(overlap_set_with_kinase(expressed_genetic_hits,overlap_set_wit
 require(VennDiagram)
 
 #plot for the figure
-pdf(paste(FIG_OUT,'-Venn_Datasets.pdf',sep=''))
+pdf(paste(FIG_OUT,'-Venn_Datasets.pdf',sep=''),width=4,height=4)
 grid.newpage()
 draw.triple.venn(comparison['genetic','genetic'],
                  comparison['kinase','kinase'],
@@ -65,7 +66,8 @@ draw.triple.venn(comparison['genetic','genetic'],
                  everything,category=c('Genetic','Kinase','Differentially expressed'),
                  fill=c('lightblue','Purple','orange'))
 dev.off()
-                
+
+print('Now printing')                
 print('Genetic and DE')
 print(unique(intersect(expressed_genetic_hits,dexp_genes)))
 print('Kinase and DE')

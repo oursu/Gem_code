@@ -5,13 +5,13 @@ TARGET_NAME_MAPPING=$4
 EXPRESSED=$5
 PPI=$6
 
-#RMYPATH=/nfs/vendata/oursu/oana/GemPaper_2015-12-07/bin/R-3.2.2/bin
-#DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
+RMYPATH=/nfs/vendata/oursu/oana/GemPaper_2015-12-07/bin/R-3.2.2/bin
+DATADIR=/nfs/vendata/oursu/oana/GemPaper_2015-12-07
 export R_LIBS=${DATADIR}/bin/R_libraries/
-#DEFILE=${DATADIR}/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff
-#TARGET_NAME_MAPPING=${DATADIR}/data/kinase/KinaseNameMapping.txt
-#EXPRESSED=/nfs/vendata/oursu/oana/GemPaper_2014-12-06/results/DE_analysis/Expressed_above_0.1
-#PPI=${DATADIR}/data/interactome/9606.mitab.01192011.uniq_miscore-localirefindex3-20110831.digraphno_UBC,EP300_symbol.pkl
+DEFILE=${DATADIR}/data/RNAseq/Table.S3.1.Cuffdiff_protein_coding_V23_vs_G23_gene_exp.diff
+TARGET_NAME_MAPPING=${DATADIR}/data/kinase/KinaseNameMapping.txt
+EXPRESSED=/nfs/vendata/oursu/oana/GemPaper_2014-12-06/results/DE_analysis/Expressed_above_0.1
+PPI=${DATADIR}/data/interactome/9606.mitab.01192011.uniq_miscore-localirefindex3-20110831.digraphno_UBC,EP300_symbol.pkl
 
 #analysis of the kinase screen                                                   
 kinase_scripts=${DATADIR}/src/Gem_code/data_processing/kinase/scripts

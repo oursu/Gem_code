@@ -129,7 +129,7 @@ if (DIRECTION=='UpAndDown'){
 binarized.kinh.target=(kinh.target<=as.numeric(KINASE_THRESHOLD))+(kinh.target>=(100+as.numeric(KINASE_THRESHOLD)))
 }
 
-write.table(binarized.kinh.target,file=paste(KINASE_PHEN,'-KinaseAffected',DIRECTION,'-BinarizedtargetsFile',sep=''),sep='\t',quote=F,row.names=F,col.names=T)
+write.table(binarized.kinh.target,file=paste(KINASE_PHEN,'-KinaseAffected',DIRECTION,'-BinarizedtargetsFile',sep=''),sep='\t',quote=F,row.names=T,col.names=T)
 write.table(colSums(binarized.kinh.target,na.rm=TRUE),file=paste(KINASE_PHEN,'-KinaseAffected',DIRECTION,'-TotalTargetsPerKI',sep=''),sep='\t',quote=F,row.names=T,col.names=T)
 
 
@@ -147,7 +147,7 @@ for (target in rownames(kinh.target)){
    val_max=max(kinh.target[target,],na.rm=TRUE)
    val=max(abs(100-val_min),abs(100-val_max))
    if ((val>=as.numeric(KINASE_THRESHOLD))){
-    phendata=rbind(phendata,data.frame(target=target,value=abs(100-val)/100,SI=si))
+    phendata=rbind(phendata,data.frame(target=target,value=val/100,SI=si))
     }
   }
 } 
@@ -180,16 +180,26 @@ for (i in c(1:dim(synergizer.aggregated)[1])){
  target=synergizer.aggregated[i,'target_kinase']
  synergizer.aggregated[i,'max']=max(kinh.target[target,],na.rm=TRUE)
  synergizer.aggregated[i,'min']=min(kinh.target[target,],na.rm=TRUE)
- synergizer.aggregated[i,'percent_activity']=max(abs(100-synergizer.aggregated[i,'max']),abs(100-synergizer.aggregated[i,'min']))
+ synergizer.aggregated[i,'percent_activity']=max(abs(100-synergizer.aggregated[i,'max']),abs(100-synergizer.aggregated[i,'min']))/100
 }
 
+print(synergizer.aggregated)
 pdf(paste(FIG_OUT,'-KinaseAffected',DIRECTION,'KinaseVsGenetics.pdf',sep=''),height=6,width=6)
 plot((100*synergizer.aggregated$percent_activity),
      synergizer.aggregated$siRNAscreen.SI,
-     xlab='Percent activity reduction by kinase inhibitor',
-  ylab='Sensitivity index deviation from 1',cex.lab=1.5,cex.axis=1.5)
+     xlab='Percent activity change by kinase inhibitor',
+  ylab='Genetic screen effect size',cex.lab=1.5,cex.axis=1.5)
 abline(v=50,col='purple',lty=2)
 abline(h=0.3,col='blue',lty=2)
+
+plot((100*synergizer.aggregated$percent_activity),
+          synergizer.aggregated$siRNAscreen.SI,
+          xlab='Percent activity change by kinase inhibitor',
+       ylab='Genetic screen effect size',cex.lab=1.5,cex.axis=1.5)
+abline(v=50,col='purple',lty=2)
+abline(h=0.3,col='blue',lty=2)
+text((100*synergizer.aggregated$percent_activity),
+               synergizer.aggregated$siRNAscreen.SI,label=synergizer.aggregated$target_kinase)
 dev.off()
 
 }
